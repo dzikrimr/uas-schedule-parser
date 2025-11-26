@@ -4,11 +4,9 @@ import { NextResponse } from "next/server";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Helper kecil untuk memecah tanggal & jam dari JSON mentah kamu
 function formatData(rawItem) {
   if (!rawItem) return null;
 
-  // Pecah "Rabu,12/03/2025"
   let hari = rawItem['hari dan tanggal'] || '-';
   let tanggal = '';
   if (hari.includes(',')) {
@@ -17,7 +15,6 @@ function formatData(rawItem) {
     tanggal = split[1];
   }
 
-  // Pecah "07:30-09:30"
   let jamMulai = rawItem['waktu'] || '-';
   let jamSelesai = '';
   if (jamMulai.includes('-')) {
@@ -26,11 +23,10 @@ function formatData(rawItem) {
     jamSelesai = split[1];
   }
 
-  // Return format bersih yang disukai Frontend
   return {
-    matkul: rawItem['mata kuliah'], // Mapping dari 'mata kuliah' ke 'matkul'
+    matkul: rawItem['mata kuliah'], 
     kelas: rawItem['kelas'],
-    ruang: rawItem['Ruang'],        // Mapping dari 'Ruang' (huruf besar)
+    ruang: rawItem['Ruang'],       
     jadwal: {
       hari: hari,
       tanggal: tanggal,
@@ -64,16 +60,14 @@ export async function POST(req) {
       return NextResponse.json({ error: "Gagal membaca jadwal (AI Error)" }, { status: 500 });
     }
 
-    // Cocokkan Data
     const hasilAkhir = ocrData.map(item => {
       const dbMatch = cariJadwal(item.matkul, item.kelas);
       
       return {
         input: item,
-        status: dbMatch ? "FOUND" : "NOT_FOUND", // Gunakan status biar gampang di frontend
+        status: dbMatch ? "FOUND" : "NOT_FOUND", 
         ocr_name: item.matkul,
         ocr_class: item.kelas,
-        // Di sini kita format datanya biar Frontend tinggal tampilkan
         data: dbMatch ? formatData(dbMatch) : null 
       };
     });
