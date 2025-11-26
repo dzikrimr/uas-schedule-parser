@@ -154,7 +154,7 @@ export default function Home() {
             Cek Jadwal Ujian Otomatis
           </h1>
           <p className="text-sm md:text-lg text-gray-500">
-            Upload screenshot jadwal, biarkan AI menyusun jadwalmu.
+            Upload screenshot jadwal kuliah, biarkan AI menyusun jadwalmu.
           </p>
         </div>
         
@@ -188,7 +188,7 @@ export default function Home() {
 
           <button 
             onClick={handleUpload} disabled={loading || !file}
-            className={`mt-4 w-full flex items-center justify-center py-3 px-4 rounded-xl font-bold shadow-lg transition-all active:scale-95 text-sm md:text-base ${
+            className={`mt-4 w-full flex items-center justify-center py-3 px-4 rounded-xl font-bold shadow-lg transition-all active:scale-95 text-sm md:text-base cursor-pointer ${
               loading || !file ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
             }`}
           >
@@ -214,7 +214,7 @@ export default function Home() {
                 <div className="flex gap-2 ignore-scan">
                   <button 
                     onClick={handleDownloadImage} disabled={downloading}
-                    className={`flex items-center text-[10px] md:text-xs px-3 py-1.5 rounded-lg font-bold shadow-sm transition-colors ${
+                    className={`flex items-center text-[10px] md:text-xs px-3 py-1.5 rounded-lg font-bold shadow-sm transition-colors cursor-pointer ${
                        downloading ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-white text-blue-700 hover:bg-blue-50'
                     }`}
                   >
