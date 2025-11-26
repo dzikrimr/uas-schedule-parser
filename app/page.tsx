@@ -25,7 +25,6 @@ interface ScanResult {
   data: JadwalDetail | null;
 }
 
-// --- KOMPONEN ICON ---
 const UploadIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-blue-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -91,6 +90,7 @@ export default function Home() {
            height: 'auto'
         },
         filter: (node) => {
+          // @ts-ignore
           return !node.className || !node.className.includes || !node.className.includes('ignore-scan');
         }
       });
@@ -101,14 +101,13 @@ export default function Home() {
       link.click();
 
     } catch (err: any) {
-      console.error("Gagal download:", err);
+      console.error(err);
       alert("Gagal menyimpan gambar. Browser mungkin memblokir script.");
     } finally {
       setDownloading(false);
     }
   };
 
-  // --- EVENT HANDLERS ---
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true); };
   const handleDragLeave = () => { setIsDragging(false); };
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
@@ -129,11 +128,18 @@ export default function Home() {
     try {
       const res = await fetch('/api/scan', { method: 'POST', body: formData });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal memproses");
-      if (data.result) setJadwal(data.result);
+      
+      if (!res.ok) throw new Error(data.error || "Gagal memproses gambar");
+      
+      if (data.result && data.result.length > 0) {
+        setJadwal(data.result);
+      } else {
+        throw new Error("Tidak ditemukan jadwal kuliah pada gambar tersebut. Pastikan gambar jelas dan berisi tabel mata kuliah.");
+      }
+
     } catch (err: any) {
       console.error(err);
-      setError("Terjadi kesalahan: " + (err.message || "Unknown error"));
+      setError("Terjadi kesalahan: " + (err.message || "Gagal memproses permintaan"));
     } finally {
       setLoading(false);
     }
@@ -143,13 +149,12 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 font-sans text-gray-800 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto flex flex-col items-center">
         
-        {/* HEADER */}
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
             Cek Jadwal UAS
           </h1>
           <p className="text-sm md:text-lg text-gray-500">
-            Upload screenshot jadwal, AI menyusun jadwalmu.
+            Upload screenshot jadwal, AI akan mencarikan ruangannya.
           </p>
         </div>
         
@@ -166,12 +171,16 @@ export default function Home() {
                 <>
                   <FileIcon />
                   <p className="font-semibold text-green-700 text-center break-all text-sm">{file.name}</p>
-                  <p className="text-xs text-green-600 mt-1">Ganti file</p>
+                  <p className="text-xs text-green-600 mt-1">Tap untuk ganti file</p>
                 </>
               ) : (
                 <>
                   <UploadIcon />
-                  <p className="font-medium text-gray-600 text-sm">Tap untuk upload gambar</p>
+                  <div className="text-center">
+                    <p className="font-medium text-gray-600 text-sm hidden sm:block">Drag & Drop gambar jadwal di sini</p>
+                    <p className="font-medium text-gray-600 text-sm sm:hidden">Tap di sini untuk upload gambar</p>
+                    <p className="text-xs text-gray-400 mt-1">atau klik untuk jelajah file</p>
+                  </div>
                 </>
               )}
             </label>
@@ -186,7 +195,7 @@ export default function Home() {
             {loading ? <><LoadingSpinner /> Proses AI...</> : <><SearchIcon /> Cari Jadwal</>}
           </button>
           
-          {error && <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs text-center animate-pulse">{error}</div>}
+          {error && <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs text-center animate-pulse font-medium">{error}</div>}
         </div>
 
         {jadwal.length > 0 && (
@@ -215,7 +224,7 @@ export default function Home() {
               </div>
               
               <div className="overflow-x-auto w-full">
-                <table className="w-full text-xs md:text-sm text-left min-w-[600px]"> {/* min-w agar tabel tidak gepeng */}
+                <table className="w-full text-xs md:text-sm text-left min-w-[600px]">
                   <thead className="text-[10px] md:text-xs text-gray-500 uppercase bg-gray-50 border-b">
                     <tr>
                       <th className="px-4 py-3 font-semibold">Mata Kuliah</th>
