@@ -151,10 +151,10 @@ export default function Home() {
         
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
-            Cek Jadwal UAS
+            Cek Jadwal Ujian Otomatis
           </h1>
           <p className="text-sm md:text-lg text-gray-500">
-            Upload screenshot jadwal, AI akan mencarikan ruangannya.
+            Upload screenshot jadwal, biarkan AI menyusun jadwalmu.
           </p>
         </div>
         
