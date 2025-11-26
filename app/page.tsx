@@ -56,6 +56,30 @@ const DownloadIcon = () => (
   </svg>
 );
 
+const InfoIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-600 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const WarningIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-800 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+);
+
+const SortIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+  </svg>
+);
+
+const TableIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7-8v8m14-8v8M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+  </svg>
+);
+
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [jadwal, setJadwal] = useState<ScanResult[]>([]);
@@ -63,6 +87,8 @@ export default function Home() {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [headerText, setHeaderText] = useState('');
+  const [isSimpleView, setIsSimpleView] = useState(false); 
   
   const resultRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +102,6 @@ export default function Home() {
       newMeta.content = 'width=1280, initial-scale=0.3, maximum-scale=5.0, user-scalable=yes';
       document.head.appendChild(newMeta);
     }
-
     return () => {
       if (metaViewport) {
         metaViewport.setAttribute('content', 'width=device-width, initial-scale=1');
@@ -84,13 +109,62 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    const text = "Cek Jadwal Ujian Otomatis";
+    let index = 0;
+    let timeout: NodeJS.Timeout;
+
+    const runTyping = () => {
+      if (index <= text.length) {
+        setHeaderText(text.slice(0, index));
+        index++;
+        timeout = setTimeout(runTyping, 100);
+      } else {
+        timeout = setTimeout(() => {
+          index = 0;
+          setHeaderText('');
+          timeout = setTimeout(runTyping, 500);
+        }, 2000);
+      }
+    };
+
+    runTyping();
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  const formatTanggalLengkap = (hari: string, tanggalRaw: string) => {
+    try {
+      if (!tanggalRaw) return hari;
+      const dateObj = new Date(tanggalRaw);
+      if (isNaN(dateObj.getTime())) return `${hari}, ${tanggalRaw}`;
+      
+      const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+      const formattedDate = dateObj.toLocaleDateString('id-ID', options);
+      
+      return `${hari}, ${formattedDate}`;
+    } catch (e) {
+      return `${hari}, ${tanggalRaw}`;
+    }
+  };
+
+  const formatTanggalSimpel = (tanggalRaw: string) => {
+    try {
+      if (!tanggalRaw) return '-';
+      const dateObj = new Date(tanggalRaw);
+      if (isNaN(dateObj.getTime())) return tanggalRaw;
+      return dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) {
+      return tanggalRaw;
+    }
+  };
+
   const handleDownloadImage = async () => {
     if (!resultRef.current) return;
     setDownloading(true);
 
     try {
       const element = resultRef.current;
-      
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const dataUrl = await toPng(element, { 
@@ -98,8 +172,8 @@ export default function Home() {
         backgroundColor: '#ffffff',
         style: {
            overflow: 'hidden',
-           minWidth: '1200px',
-           width: '1200px',
+           minWidth: '1024px',
+           width: '1024px',
            height: 'auto',
            display: 'block'
         },
@@ -146,7 +220,21 @@ export default function Home() {
       if (!res.ok) throw new Error(data.error || "Gagal memproses gambar");
       
       if (data.result && data.result.length > 0) {
-        setJadwal(data.result);
+        
+        const sortedResult = data.result.sort((a: ScanResult, b: ScanResult) => {
+          if (a.status === 'FOUND' && b.status !== 'FOUND') return -1;
+          if (a.status !== 'FOUND' && b.status === 'FOUND') return 1;
+
+          if (a.status === 'FOUND' && b.status === 'FOUND' && a.data && b.data) {
+             const dateA = new Date(a.data.jadwal.tanggal).getTime();
+             const dateB = new Date(b.data.jadwal.tanggal).getTime();
+             return dateA - dateB;
+          }
+          
+          return 0;
+        });
+
+        setJadwal(sortedResult);
       } else {
         throw new Error("Tidak ditemukan jadwal kuliah pada gambar tersebut. Pastikan gambar jelas.");
       }
@@ -160,21 +248,30 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto flex flex-col items-center">
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 py-10 px-4">
+      <div className="w-full max-w-5xl mx-auto flex flex-col items-center">
         
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
-            Cek Jadwal UAS
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight min-h-[48px]">
+            {headerText}
+            <span className="animate-pulse text-gray-500">|</span>
           </h1>
-          <p className="text-sm md:text-lg text-gray-500">
+          <p className="text-lg text-gray-500">
             Upload screenshot jadwal kuliahmu, biarkan AI menyusun jadwalmu.
           </p>
         </div>
         
-        <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-lg mb-8 border border-gray-200">
+        <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-xl mb-10 border border-gray-200">
+          
+          <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <WarningIcon />
+            <p className="text-sm text-gray-700 leading-snug">
+              Pastikan upload <strong>screenshot penuh</strong> jadwal dari SIAM (termasuk header tabel) agar AI dapat membaca data dengan akurat.
+            </p>
+          </div>
+
           <div 
-            className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer ${
+            className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer ${
               isDragging ? 'border-black bg-gray-100 scale-[1.02]' : file ? 'border-gray-500 bg-gray-50' : 'border-gray-300 hover:border-gray-500 hover:bg-gray-50'
             }`}
             onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
@@ -184,16 +281,16 @@ export default function Home() {
               {file ? (
                 <>
                   <FileIcon />
-                  <p className="font-semibold text-gray-900 text-center break-all text-sm">{file.name}</p>
+                  <p className="font-semibold text-gray-900 text-center break-all text-sm mt-2">{file.name}</p>
                   <p className="text-xs text-gray-500 mt-1">Tap untuk ganti file</p>
                 </>
               ) : (
                 <>
                   <UploadIcon />
                   <div className="text-center">
-                    <p className="font-medium text-gray-600 text-sm hidden sm:block">Drag & Drop gambar jadwal di sini</p>
-                    <p className="font-medium text-gray-600 text-sm sm:hidden">Tap di sini untuk upload gambar</p>
-                    <p className="text-xs text-gray-400 mt-1">atau klik untuk jelajah file</p>
+                    <p className="font-medium text-gray-700 text-sm hidden sm:block">Drag & Drop gambar jadwal di sini</p>
+                    <p className="font-medium text-gray-700 text-sm sm:hidden">Tap di sini untuk upload gambar</p>
+                    <p className="text-xs text-gray-400 mt-2">Format: JPG, PNG, Screenshot</p>
                   </div>
                 </>
               )}
@@ -202,105 +299,183 @@ export default function Home() {
 
           <button 
             onClick={handleUpload} disabled={loading || !file}
-            className={`mt-4 w-full flex items-center justify-center py-3 px-4 rounded-xl font-bold shadow-md transition-all active:scale-95 text-sm md:text-base cursor-pointer ${
-              loading || !file ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' : 'bg-black text-white hover:bg-gray-800'
+            className={`mt-6 w-full flex items-center justify-center py-3.5 px-4 rounded-xl font-bold text-base shadow-md transition-all active:scale-95 cursor-pointer ${
+              loading || !file ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none' : 'bg-black text-white hover:bg-gray-800'
             }`}
           >
-            {loading ? <><LoadingSpinner /> Proses...</> : <><SearchIcon /> Cari Jadwal</>}
+            {loading ? <><LoadingSpinner /> Sedang Memproses...</> : <><SearchIcon /> Cari Jadwal Saya</>}
           </button>
           
-          {error && <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-800 text-xs text-center font-medium">{error}</div>}
+          {error && <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center font-medium">{error}</div>}
         </div>
 
         {jadwal.length > 0 && (
           <div className="w-full animate-fade-in-up">
             
-            <div ref={resultRef} className="bg-white rounded-xl shadow-xl border border-gray-200 mb-6 overflow-x-auto w-full">
+            <div ref={resultRef} className="bg-white rounded-2xl shadow-2xl border border-gray-200 mb-8 overflow-hidden w-full mx-auto max-w-5xl">
               
-              <div className="bg-black px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3 w-full min-w-[900px]">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-white font-bold text-base">Hasil Pencarian</h2>
-                  <span className="text-black text-[10px] bg-gray-200 px-2 py-0.5 rounded-full font-bold">
-                    {jadwal.filter(j => j.status === 'FOUND').length} Ketemu
+              <div className="bg-black px-6 py-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-white font-bold text-lg tracking-wide">Hasil Pencarian Jadwal</h2>
+                  <span className="text-black text-xs bg-white px-3 py-1 rounded-full font-extrabold">
+                    {jadwal.filter(j => j.status === 'FOUND').length} Ditemukan
                   </span>
                 </div>
 
-                <div className="flex gap-2 ignore-scan">
+                <div className="flex items-center gap-3">
+                  {/* Sorting Info */}
+                  <div className="hidden sm:flex items-center text-gray-400 text-xs gap-1">
+                    <SortIcon />
+                    <span>Terurut per tanggal</span>
+                  </div>
+
+                  {/* Toggle View Button */}
+                  <button 
+                    onClick={() => setIsSimpleView(!isSimpleView)}
+                    className="flex items-center text-xs px-3 py-2 rounded-lg font-bold shadow-sm transition-colors cursor-pointer bg-gray-800 text-white hover:bg-gray-700 ignore-scan"
+                  >
+                    <TableIcon /> {isSimpleView ? 'Format Standar' : 'Ganti Format'}
+                  </button>
+
+                  {/* Download Button */}
                   <button 
                     onClick={handleDownloadImage} disabled={downloading}
-                    className={`flex items-center text-xs px-3 py-2 rounded-lg font-bold shadow-sm transition-colors cursor-pointer ${
-                       downloading ? 'bg-gray-500 text-gray-300 cursor-not-allowed' : 'bg-white text-black hover:bg-gray-200'
+                    className={`flex items-center text-xs px-4 py-2 rounded-lg font-bold shadow-sm transition-colors cursor-pointer ignore-scan ${
+                       downloading ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-white text-black hover:bg-gray-200'
                     }`}
                   >
-                    {downloading ? "Menyimpan..." : <><DownloadIcon /> Simpan (PNG)</>}
+                    {downloading ? "Menyimpan..." : <><DownloadIcon /> Simpan Gambar</>}
                   </button>
                 </div>
               </div>
               
               <div className="w-full">
-                <table className="w-full text-sm text-left min-w-[900px]">
-                  <thead className="text-xs text-gray-500 uppercase bg-gray-100 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4 font-semibold text-gray-700 w-1/3">Mata Kuliah</th>
-                      <th className="px-4 py-4 text-center font-semibold text-gray-700">Kelas</th>
-                      <th className="px-6 py-4 font-semibold text-gray-700">Waktu Ujian</th>
-                      <th className="px-6 py-4 text-center font-semibold text-gray-700">Ruang</th>
-                      <th className="px-4 py-4 text-center font-semibold text-gray-700">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {jadwal.map((item, index) => {
-                      const isFound = item.status === 'FOUND';
-                      return (
-                        <tr key={index} className={`hover:bg-gray-50 transition-colors ${!isFound ? 'bg-gray-50' : ''}`}>
-                          <td className="px-6 py-4">
-                            <div className="font-bold text-gray-900 text-base">
-                              {isFound && item.data ? item.data.matkul : item.ocr_name}
-                            </div>
-                            {!isFound && <div className="text-xs text-gray-400 mt-1 italic">Tidak ditemukan di database</div>}
-                          </td>
-                          <td className="px-4 py-4 text-center">
-                            <span className={`inline-block w-8 h-8 leading-8 rounded-full font-bold text-xs ${isFound ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'}`}>
-                              {isFound && item.data ? item.data.kelas : item.ocr_class || '?'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {isFound && item.data ? (
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-gray-900">{item.data.jadwal.hari}, {item.data.jadwal.tanggal}</span>
-                                <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-0.5 rounded w-fit mt-1 border border-gray-200">
-                                  {item.data.jadwal.jam_mulai} - {item.data.jadwal.jam_selesai}
-                                </span>
+                {isSimpleView ? (
+                  // --- SIMPLE TABLE VIEW ---
+                  <table className="w-full text-sm text-left border-collapse">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-3 border border-gray-200 text-center">Hari</th>
+                        <th className="px-4 py-3 border border-gray-200 text-center">Tanggal</th>
+                        <th className="px-4 py-3 border border-gray-200 text-center">Jam</th>
+                        <th className="px-4 py-3 border border-gray-200">Mata Kuliah</th>
+                        <th className="px-4 py-3 border border-gray-200 text-center">Kelas</th>
+                        <th className="px-4 py-3 border border-gray-200 text-center">Ruang</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {jadwal.map((item, index) => {
+                        const isFound = item.status === 'FOUND';
+                        return (
+                          <tr key={index} className={`${isFound ? 'bg-white' : 'bg-gray-50'}`}>
+                            <td className="px-4 py-3 border border-gray-200 text-center font-medium">
+                              {isFound && item.data ? item.data.jadwal.hari : '-'}
+                            </td>
+                            <td className="px-4 py-3 border border-gray-200 text-center">
+                              {isFound && item.data ? formatTanggalSimpel(item.data.jadwal.tanggal) : '-'}
+                            </td>
+                            <td className="px-4 py-3 border border-gray-200 text-center font-mono text-xs">
+                              {isFound && item.data ? `${item.data.jadwal.jam_mulai} - ${item.data.jadwal.jam_selesai}` : '-'}
+                            </td>
+                            <td className="px-4 py-3 border border-gray-200">
+                              <div className="font-bold text-gray-900">
+                                {isFound && item.data ? item.data.matkul : item.ocr_name}
                               </div>
-                            ) : <span className="text-gray-400">-</span>}
-                          </td>
-                          <td className="px-6 py-4 text-center whitespace-nowrap">
-                            {isFound && item.data ? (
-                              <span className="bg-gray-800 text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-sm">
-                                {item.data.ruang}
+                              {!isFound && <div className="text-xs text-red-500 italic mt-1">Tidak ditemukan</div>}
+                            </td>
+                            <td className="px-4 py-3 border border-gray-200 text-center font-bold">
+                              {isFound && item.data ? item.data.kelas : item.ocr_class || '?'}
+                            </td>
+                            <td className="px-4 py-3 border border-gray-200 text-center font-bold">
+                              {isFound && item.data ? item.data.ruang : '-'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  // --- STANDARD CARD/TABLE VIEW ---
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-gray-500 uppercase bg-gray-100 border-b border-gray-200">
+                      <tr>
+                        <th className="px-6 py-4 font-extrabold text-gray-700 w-1/3">Mata Kuliah</th>
+                        <th className="px-4 py-4 text-center font-extrabold text-gray-700">Kelas</th>
+                        <th className="px-6 py-4 font-extrabold text-gray-700">Waktu Ujian</th>
+                        <th className="px-6 py-4 text-center font-extrabold text-gray-700">Ruang</th>
+                        <th className="px-4 py-4 text-center font-extrabold text-gray-700">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {jadwal.map((item, index) => {
+                        const isFound = item.status === 'FOUND';
+                        return (
+                          <tr key={index} className={`hover:bg-gray-50 transition-colors ${!isFound ? 'bg-red-50/10' : ''}`}>
+                            <td className="px-6 py-5">
+                              <div className="font-bold text-gray-900 text-base">
+                                {isFound && item.data ? item.data.matkul : item.ocr_name}
+                              </div>
+                              {!isFound && <div className="text-xs text-red-500 mt-1 font-medium italic">Tidak ditemukan di database</div>}
+                            </td>
+                            <td className="px-4 py-5 text-center">
+                              <span className={`inline-block w-9 h-9 leading-9 rounded-full font-bold text-sm ${isFound ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                {isFound && item.data ? item.data.kelas : item.ocr_class || '?'}
                               </span>
-                            ) : <span className="text-gray-400">-</span>}
-                          </td>
-                          <td className="px-4 py-4 text-center">
-                            {isFound ? (
-                              <span className="text-gray-800 text-xl font-bold">✓</span>
-                            ) : (
-                              <span className="text-gray-300 text-xl font-bold">✕</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                            </td>
+                            <td className="px-6 py-5 whitespace-nowrap">
+                              {isFound && item.data ? (
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-gray-900 text-base">
+                                    {formatTanggalLengkap(item.data.jadwal.hari, item.data.jadwal.tanggal)}
+                                  </span>
+                                  <span className="text-xs text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded w-fit mt-1.5 border border-gray-300 font-medium">
+                                    {item.data.jadwal.jam_mulai} - {item.data.jadwal.jam_selesai}
+                                  </span>
+                                </div>
+                              ) : <span className="text-gray-400 font-medium">-</span>}
+                            </td>
+                            <td className="px-6 py-5 text-center whitespace-nowrap">
+                              {isFound && item.data ? (
+                                <span className="bg-gray-900 text-white text-sm font-bold px-5 py-2 rounded-full shadow-sm">
+                                  {item.data.ruang}
+                                </span>
+                              ) : <span className="text-gray-400">-</span>}
+                            </td>
+                            <td className="px-4 py-5 text-center">
+                              {isFound ? (
+                                <span className="text-green-600 text-2xl font-bold">✓</span>
+                              ) : (
+                                <span className="text-red-500 text-xl font-bold">✕</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </div>
-              <div className="bg-gray-50 px-4 py-3 text-xs text-gray-500 text-center border-t border-gray-200 min-w-[900px]">
-                Hasil ini dihasilkan oleh AI. Selalu cek kembali dengan jadwal resmi fakultas.
+              <div className="bg-gray-50 px-6 py-4 text-xs text-gray-500 border-t border-gray-200">
+                <div className="flex items-start space-x-2">
+                  <div className="space-y-1">
+                    <p className="font-bold text-gray-800">Keterangan Status:</p>
+                    <ul className="list-none space-y-1 text-gray-600">
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-600 font-bold text-lg">✓</span> 
+                        <span>Jadwal ditemukan di database.</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-red-500 font-bold text-lg">✕</span> 
+                        <span>Jadwal tidak ditemukan / data tidak cocok.</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
             
-             <p className="text-center text-gray-400 text-xs mb-12">
-               * Tekan tombol "Simpan (PNG)" untuk mengunduh jadwal lengkap.
+             <p className="text-center text-gray-400 text-xs mb-12 font-medium">
+               * Tekan tombol "Simpan Gambar" di atas tabel untuk mengunduh jadwal lengkap.
              </p>
           </div>
         )}

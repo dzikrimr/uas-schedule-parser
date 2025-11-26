@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ExamScheduleChecker",
+  title: "JadwalinAI",
   description: "Exam schedule checker for university students using Generative AI.",
 };
 
