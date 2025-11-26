@@ -26,13 +26,13 @@ interface ScanResult {
 }
 
 const UploadIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-blue-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-blue-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
   </svg>
 );
 
 const FileIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-green-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
   </svg>
 );
@@ -80,7 +80,7 @@ export default function Home() {
 
       const dataUrl = await toPng(element, { 
         cacheBust: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1f2937',
         width: scrollWidth, 
         height: scrollHeight,
         style: {
@@ -96,7 +96,7 @@ export default function Home() {
       });
       
       const link = document.createElement('a');
-      link.download = `Jadwal-UAS-${Date.now()}.png`;
+      link.download = `Jadwal-UAS-Dark-${Date.now()}.png`;
       link.href = dataUrl;
       link.click();
 
@@ -146,22 +146,26 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 font-sans text-gray-800 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-900 font-sans text-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto flex flex-col items-center">
         
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 mb-2">
             Cek Jadwal Ujian Otomatis
           </h1>
-          <p className="text-sm md:text-lg text-gray-500">
+          <p className="text-sm md:text-lg text-gray-400">
             Upload screenshot jadwal kuliah, biarkan AI menyusun jadwalmu.
           </p>
         </div>
         
-        <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-lg mb-8 border border-white/50 backdrop-blur-sm">
+        <div className="bg-gray-800 p-6 rounded-2xl shadow-2xl w-full max-w-lg mb-8 border border-gray-700">
           <div 
             className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer ${
-              isDragging ? 'border-blue-500 bg-blue-50 scale-[1.02]' : file ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+              isDragging 
+                ? 'border-blue-500 bg-gray-700 scale-[1.02]' 
+                : file 
+                  ? 'border-green-500/50 bg-green-900/20' 
+                  : 'border-gray-600 hover:border-blue-400 hover:bg-gray-700/50'
             }`}
             onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
           >
@@ -170,16 +174,16 @@ export default function Home() {
               {file ? (
                 <>
                   <FileIcon />
-                  <p className="font-semibold text-green-700 text-center break-all text-sm">{file.name}</p>
-                  <p className="text-xs text-green-600 mt-1">Tap untuk ganti file</p>
+                  <p className="font-semibold text-green-400 text-center break-all text-sm">{file.name}</p>
+                  <p className="text-xs text-green-500/80 mt-1">Tap untuk ganti file</p>
                 </>
               ) : (
                 <>
                   <UploadIcon />
                   <div className="text-center">
-                    <p className="font-medium text-gray-600 text-sm hidden sm:block">Drag & Drop gambar jadwal di sini</p>
-                    <p className="font-medium text-gray-600 text-sm sm:hidden">Tap di sini untuk upload gambar</p>
-                    <p className="text-xs text-gray-400 mt-1">atau klik untuk jelajah file</p>
+                    <p className="font-medium text-gray-300 text-sm hidden sm:block">Drag & Drop gambar jadwal di sini</p>
+                    <p className="font-medium text-gray-300 text-sm sm:hidden">Tap di sini untuk upload gambar</p>
+                    <p className="text-xs text-gray-500 mt-1">atau klik untuk jelajah file</p>
                   </div>
                 </>
               )}
@@ -189,24 +193,26 @@ export default function Home() {
           <button 
             onClick={handleUpload} disabled={loading || !file}
             className={`mt-4 w-full flex items-center justify-center py-3 px-4 rounded-xl font-bold shadow-lg transition-all active:scale-95 text-sm md:text-base cursor-pointer ${
-              loading || !file ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+              loading || !file 
+                ? 'bg-gray-700 text-gray-500 cursor-not-allowed shadow-none' 
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500 shadow-blue-900/20'
             }`}
           >
             {loading ? <><LoadingSpinner /> Proses AI...</> : <><SearchIcon /> Cari Jadwal</>}
           </button>
           
-          {error && <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs text-center animate-pulse font-medium">{error}</div>}
+          {error && <div className="mt-4 p-3 bg-red-900/20 border border-red-800 rounded-lg text-red-400 text-xs text-center animate-pulse font-medium">{error}</div>}
         </div>
 
         {jadwal.length > 0 && (
           <div className="w-full animate-fade-in-up">
             
-            <div ref={resultRef} className="bg-white rounded-2xl shadow-xl border border-gray-100 mb-6 overflow-hidden">
+            <div ref={resultRef} className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 mb-6 overflow-hidden">
               
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+              <div className="bg-gradient-to-r from-blue-700 to-indigo-700 px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <div className="flex items-center gap-2">
                   <h2 className="text-white font-bold text-base">Hasil Pencarian</h2>
-                  <span className="text-blue-100 text-[10px] bg-white/20 px-2 py-0.5 rounded-full border border-white/20">
+                  <span className="text-blue-100 text-[10px] bg-white/10 px-2 py-0.5 rounded-full border border-white/20">
                     {jadwal.filter(j => j.status === 'FOUND').length} Ketemu
                   </span>
                 </div>
@@ -215,7 +221,7 @@ export default function Home() {
                   <button 
                     onClick={handleDownloadImage} disabled={downloading}
                     className={`flex items-center text-[10px] md:text-xs px-3 py-1.5 rounded-lg font-bold shadow-sm transition-colors cursor-pointer ${
-                       downloading ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-white text-blue-700 hover:bg-blue-50'
+                       downloading ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-700 text-white hover:bg-gray-600 border border-gray-600'
                     }`}
                   >
                     {downloading ? "Menyimpan..." : <><DownloadIcon /> Simpan (PNG)</>}
@@ -225,7 +231,7 @@ export default function Home() {
               
               <div className="overflow-x-auto w-full">
                 <table className="w-full text-xs md:text-sm text-left min-w-[600px]">
-                  <thead className="text-[10px] md:text-xs text-gray-500 uppercase bg-gray-50 border-b">
+                  <thead className="text-[10px] md:text-xs text-gray-400 uppercase bg-gray-700/50 border-b border-gray-700">
                     <tr>
                       <th className="px-4 py-3 font-semibold">Mata Kuliah</th>
                       <th className="px-2 py-3 text-center font-semibold">Kls</th>
@@ -234,44 +240,44 @@ export default function Home() {
                       <th className="px-2 py-3 text-center font-semibold">Stat</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-gray-700">
                     {jadwal.map((item, index) => {
                       const isFound = item.status === 'FOUND';
                       return (
-                        <tr key={index} className={`hover:bg-gray-50 transition-colors ${!isFound ? 'bg-red-50/50' : ''}`}>
+                        <tr key={index} className={`hover:bg-gray-700/50 transition-colors ${!isFound ? 'bg-red-900/10' : ''}`}>
                           <td className="px-4 py-3 max-w-[150px] md:max-w-none">
-                            <div className="font-bold text-gray-900">
+                            <div className="font-bold text-gray-100">
                               {isFound && item.data ? item.data.matkul : item.ocr_name}
                             </div>
-                            {!isFound && <div className="text-[10px] text-red-500 mt-0.5">Tidak ditemukan</div>}
+                            {!isFound && <div className="text-[10px] text-red-400 mt-0.5">Tidak ditemukan</div>}
                           </td>
                           <td className="px-2 py-3 text-center">
-                            <span className={`inline-block w-6 h-6 leading-6 rounded-full font-bold text-[10px] ${isFound ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-500'}`}>
+                            <span className={`inline-block w-6 h-6 leading-6 rounded-full font-bold text-[10px] ${isFound ? 'bg-blue-900/40 text-blue-300 border border-blue-700/50' : 'bg-gray-700 text-gray-400'}`}>
                               {isFound && item.data ? item.data.kelas : item.ocr_class || '?'}
                             </span>
                           </td>
                           <td className="px-4 py-3">
                             {isFound && item.data ? (
                               <div className="flex flex-col">
-                                <span className="font-semibold text-gray-700 whitespace-nowrap">{item.data.jadwal.hari}, {item.data.jadwal.tanggal}</span>
-                                <span className="text-[10px] text-gray-500 font-mono bg-gray-100 px-1.5 py-0.5 rounded w-fit mt-1">
+                                <span className="font-semibold text-gray-200 whitespace-nowrap">{item.data.jadwal.hari}, {item.data.jadwal.tanggal}</span>
+                                <span className="text-[10px] text-gray-400 font-mono bg-gray-700/50 px-1.5 py-0.5 rounded w-fit mt-1 border border-gray-600">
                                   {item.data.jadwal.jam_mulai} - {item.data.jadwal.jam_selesai}
                                 </span>
                               </div>
-                            ) : <span className="text-gray-400">-</span>}
+                            ) : <span className="text-gray-600">-</span>}
                           </td>
                           <td className="px-4 py-3 text-center">
                             {isFound && item.data ? (
-                              <span className="bg-green-100 text-green-700 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-200 shadow-sm whitespace-nowrap">
+                              <span className="bg-green-900/30 text-green-300 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-700/50 shadow-sm whitespace-nowrap">
                                 {item.data.ruang}
                               </span>
-                            ) : <span className="text-gray-400">-</span>}
+                            ) : <span className="text-gray-600">-</span>}
                           </td>
                           <td className="px-2 py-3 text-center">
                             {isFound ? (
-                              <span className="text-green-600 text-base">✓</span>
+                              <span className="text-green-400 text-base">✓</span>
                             ) : (
-                              <span className="text-red-500 text-base">✕</span>
+                              <span className="text-red-400 text-base">✕</span>
                             )}
                           </td>
                         </tr>
@@ -280,12 +286,12 @@ export default function Home() {
                   </tbody>
                 </table>
               </div>
-              <div className="bg-gray-50 px-4 py-2 text-[10px] text-gray-400 text-center border-t border-gray-200">
+              <div className="bg-gray-700/30 px-4 py-2 text-[10px] text-gray-400 text-center border-t border-gray-700">
                 AI bisa saja mengalami kesalahan, cek jadwal resmi untuk memvalidasi.
               </div>
             </div>
             
-             <p className="text-center text-gray-400 text-xs mb-12">
+             <p className="text-center text-gray-500 text-xs mb-12">
                * Geser tabel untuk melihat detail. Tekan "Simpan" untuk download full.
              </p>
           </div>
